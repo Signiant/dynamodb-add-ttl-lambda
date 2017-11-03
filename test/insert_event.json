@@ -1,0 +1,31 @@
+{
+   "Records":[
+      {
+         "eventID":"12345678980",
+         "eventVersion":"1.1",
+         "dynamodb":{
+            "SequenceNumber":"12345678980",
+            "Keys":{
+               "messageId":{
+                  "S":"test1"
+               }
+            },
+            "SizeBytes":632,
+            "NewImage":{
+               "protocol":{
+                  "S":"http"
+               },
+               "messageId":{
+                  "S":"test1"
+               }
+            },
+            "ApproximateCreationDateTime":1509714840.0,
+            "StreamViewType":"NEW_AND_OLD_IMAGES"
+         },
+         "awsRegion":"us-west-1",
+         "eventName":"INSERT",
+         "eventSourceARN":"arn:aws:dynamodb:us-west-1:123456789021:table/MYTABLE/stream/2017-11-03T12:59:56.918",
+         "eventSource":"aws:dynamodb"
+      }
+   ]
+}
