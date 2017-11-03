@@ -1,0 +1,183 @@
+{
+   "AWSTemplateFormatVersion":"2010-09-09",
+   "Metadata":{
+      "AWS::CloudFormation::Interface":{
+         "ParameterGroups":[
+            {
+               "Label":{
+                  "default":"Function Code Location"
+               },
+               "Parameters":[
+                  "FunctionS3Bucket",
+                  "FunctionS3Key"
+               ]
+            },
+            {
+               "Label":{
+                  "default":"DynamoDB Configuration"
+               },
+               "Parameters":[
+                  "tableName",
+                  "masterAttribute",
+                  "timeToLive",
+                  "ttlAttributeName"
+               ]
+            }
+         ]
+      }
+   },
+   "Parameters":{
+      "FunctionS3Bucket":{
+         "Type":"String",
+         "Default":"",
+         "Description":"S3 bucket containing the Lambda function zip file"
+      },
+      "FunctionS3Key":{
+         "Type":"String",
+         "Default":"",
+         "Description":"S3 key within the bucket for the function (ie. folder/foo.zip)"
+      },
+      "SlackApiKey":{
+         "Type":"String",
+         "Default":"",
+         "Description":"Valid Slack API Key (obtain by creating a bot)"
+      },
+      "masterAttribute":{
+         "Type":"String",
+         "Default":"",
+         "Description":"Base the TTL on this attribute"
+      },
+      "timeToLive":{
+         "Type":"String",
+         "Default":"",
+         "Description":"Add this many days to the masterAttribute and use it as the ttl value"
+      },
+      "ttlAttributeName":{
+        "Type":"String",
+        "Default": "ttl",
+        "Description": "Name of the attribute to create as the ttl"
+      },
+      "tableName":{
+        "Type":"String",
+        "Default": "",
+        "Description": "DynamoDB Table to apply the ttl to"
+      }
+   },
+   "Resources":{
+      "FunctionRole":{
+         "Type":"AWS::IAM::Role",
+         "Properties":{
+            "Path":"/dynamodb/ttl/",
+            "AssumeRolePolicyDocument":{
+               "Version":"2012-10-17",
+               "Statement":[
+                  {
+                     "Effect":"Allow",
+                     "Principal":{
+                        "Service":[
+                           "lambda.amazonaws.com"
+                        ]
+                     },
+                     "Action":[
+                        "sts:AssumeRole"
+                     ]
+                  }
+               ]
+            },
+            "Policies":[
+               {
+                  "PolicyName":"DynamoDBAddTTL",
+                  "PolicyDocument":{
+                     "Version":"2012-10-17",
+                     "Statement":[
+                        {
+                           "Sid":"Logging",
+                           "Action":[
+                              "logs:CreateLogGroup",
+                              "logs:CreateLogStream",
+                              "logs:PutLogEvents"
+                           ],
+                           "Effect":"Allow",
+                           "Resource":"arn:aws:logs:*:*:*:*"
+                        },
+                        {
+                          "Sid": "SourceStream",
+                          "Action": [
+                            "dynamodb:GetRecords",
+                            "dynamodb:GetShardIterator",
+                            "dynamodb:DescribeStream",
+                            "dynamodb:ListStreams"
+                          ],
+                          "Effect": "Allow",
+                          "Resource": "arn:aws:dynamodb:*:*:table/*/stream/*"
+                        },
+                        {
+                          "Sid":"DynamoDB",
+                          "Effect":"Allow",
+                          "Action":[
+                            "dynamodb:UpdateItem"
+                          ],
+                          "Resource": { "Fn::Join": [ ":", [ "arn", "aws", "dynamodb", { "Ref": "AWS::Region" }, "*", "table/*"]]}
+                        }
+                     ]
+                  }
+               }
+            ]
+         }
+      },
+      "TTLFunction":{
+         "Type":"AWS::Lambda::Function",
+         "Properties":{
+            "FunctionName":"DynamoDBAddTTL",
+            "Description":"Add a TTL to an existing DynamoDB table row on insert",
+            "Role":{
+               "Fn::GetAtt":[
+                  "FunctionRole",
+                  "Arn"
+               ]
+            },
+            "Runtime":"python2.7",
+            "Handler":"dynamodb-add-ttl-cfn.lambda_handler",
+            "MemorySize":128,
+            "Timeout":20,
+            "Environment":{
+               "Variables":{
+                  "master_attribute":{
+                     "Ref":"masterAttribute"
+                  },
+                  "time_to_live_days":{
+                     "Ref":"timeToLive"
+                  },
+                  "ttl_attribute_name": {
+                    "Ref":"ttlAttributeName"
+                  }
+               }
+            },
+            "Code":{
+               "S3Bucket":{
+                  "Ref":"FunctionS3Bucket"
+               },
+               "S3Key":{
+                  "Ref":"FunctionS3Key"
+               }
+            }
+         }
+      },
+      "LambdaInvokePermission":{
+         "Type":"AWS::Lambda::Permission",
+         "Properties":{
+            "Action":"lambda:InvokeFunction",
+            "FunctionName":{
+               "Fn::GetAtt":[
+                  "TTLFunction",
+                  "Arn"
+               ]
+            },
+            "Principal":"dynamodb.amazonaws.com",
+            "SourceAccount": {
+              "Ref": "AWS::AccountId"
+            }
+         }
+      }
+   }
+}
