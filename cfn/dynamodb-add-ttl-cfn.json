@@ -37,11 +37,6 @@
          "Default":"",
          "Description":"S3 key within the bucket for the function (ie. folder/foo.zip)"
       },
-      "SlackApiKey":{
-         "Type":"String",
-         "Default":"",
-         "Description":"Valid Slack API Key (obtain by creating a bot)"
-      },
       "masterAttribute":{
          "Type":"String",
          "Default":"",
@@ -117,7 +112,7 @@
                           "Action":[
                             "dynamodb:UpdateItem"
                           ],
-                          "Resource": { "Fn::Join": [ ":", [ "arn", "aws", "dynamodb", { "Ref": "AWS::Region" }, "*", "table/*"]]}
+                          "Resource": { "Fn::Join": [ "", [ "arn:aws:dynamodb:", { "Ref": "AWS::Region" }, ":*:table/", { "Ref": "tableName" }]]}
                         }
                      ]
                   }
@@ -128,7 +123,7 @@
       "TTLFunction":{
          "Type":"AWS::Lambda::Function",
          "Properties":{
-            "FunctionName":"DynamoDBAddTTL",
+            "FunctionName":{ "Fn::Join" : [ "-", ["DynamoDBAddTTL", { "Ref" : "tableName" }] ] },
             "Description":"Add a TTL to an existing DynamoDB table row on insert",
             "Role":{
                "Fn::GetAtt":[
@@ -137,7 +132,7 @@
                ]
             },
             "Runtime":"python2.7",
-            "Handler":"dynamodb-add-ttl-cfn.lambda_handler",
+            "Handler":"dynamodb-add-ttl.lambda_handler",
             "MemorySize":128,
             "Timeout":20,
             "Environment":{
