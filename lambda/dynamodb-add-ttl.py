@@ -17,7 +17,7 @@ def get_base_value_epoch_seconds(base_value):
     try:
         parsed = dateutil.parser.parse(base_value)
         print(base_value + " looks to be a time string")
-        epoch_seconds = long(parsed.strftime('%s'))
+        epoch_seconds = int(parsed.strftime('%s'))
     except Exception as e:
         print(base_value + " is not an ISO8601 string")
 
@@ -33,13 +33,13 @@ def get_base_value_epoch_seconds(base_value):
             now = time.mktime(time.gmtime())
             if base_value_float > now:
                 print(base_value + " looks to be in milliseconds - converting to seconds")
-                epoch_seconds = long(base_value_float / 1000.0)
+                epoch_seconds = int(base_value_float / 1000.0)
             else:
                 # Could be seconds - see if we can parse it
                 try:
                     time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(base_value_float))
                     print(base_value + " looks to be in seconds already")
-                    epoch_seconds = long(base_value)
+                    epoch_seconds = int(base_value)
                 except Exception as e:
                     print(base_value + " does not look to be seconds " + str(e))
 
@@ -49,7 +49,7 @@ def get_base_value_epoch_seconds(base_value):
 def get_expiry(base_value, ttl_duration):
     expiry_ttl = None
 
-    future = datetime.datetime.fromtimestamp(float(base_value)) + datetime.timedelta(days=long(ttl_duration))
+    future = datetime.datetime.fromtimestamp(float(base_value)) + datetime.timedelta(days=int(ttl_duration))
     expiry_ttl = calendar.timegm(future.timetuple())
 
     return expiry_ttl
@@ -59,7 +59,7 @@ def update_item(table_name, key, ttl_attrib_name, ttl_attrib_value, client):
     status = False
     key_str = json.dumps(key)
 
-    print ("updating item " + key_str + " in table " + table_name)
+    print("updating item " + key_str + " in table " + table_name)
 
     response = client.update_item(
         TableName=table_name,
@@ -79,16 +79,16 @@ def update_item(table_name, key, ttl_attrib_name, ttl_attrib_value, client):
     if 'ResponseMetadata' in response:
         if 'HTTPStatusCode' in response['ResponseMetadata']:
             if response['ResponseMetadata']['HTTPStatusCode'] != 200:
-                print "ERROR: error updating key " + key_str
+                print("ERROR: error updating key " + key_str)
                 status = False
             else:
-                print "+ Successfully updated " + key_str
+                print("+ Successfully updated " + key_str)
                 status = True
         else:
-            print "ERROR: No http status code in response when trying to update " + key_str
+            print("ERROR: No http status code in response when trying to update " + key_str)
             status = False
     else:
-        print "ERROR: No response metadata when trying to update " + key_str
+        print("ERROR: No response metadata when trying to update " + key_str)
         status = False
 
     return status
@@ -128,7 +128,7 @@ def lambda_handler(event, context):
         if record['eventName'] == "INSERT":
             table_name = record["eventSourceARN"].split("/")[1]
 
-            print "New INSERT into table " + table_name + " detected - adding TTL if not already present"
+            print("New INSERT into table " + table_name + " detected - adding TTL if not already present")
 
             # Do we already have a TTL (very unlikely)?
             if ttl_attribute_name not in record["dynamodb"]["NewImage"]:
@@ -163,7 +163,7 @@ def lambda_handler(event, context):
                             print("ERROR: Unable to obtain the original timestamp attribute value to compute a TTL")
                             status = False
             else:
-                print "TTL already present - no update required"
+                print("TTL already present - no update required")
 
     if do_update:
         session = boto3.session.Session(region_name=record['awsRegion'])
