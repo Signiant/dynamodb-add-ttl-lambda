@@ -19,7 +19,7 @@ def get_base_value_epoch_seconds(base_value):
         print(base_value + " looks to be a time string")
         epoch_seconds = int(parsed.strftime('%s'))
     except Exception as e:
-        print(base_value + " is not an ISO8601 string")
+        print(base_value + " is not an ISO8601 string: " + str(e))
 
     if not epoch_seconds:
         # Could be seconds or milliseconds
