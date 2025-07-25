@@ -12,4 +12,4 @@ sed -i "s|<HOOK_URL>|${HOOK_URL}|g" samconfig.toml
 echo "Building"
 sam build
 echo "Deploying to ${deploy_env}"
-sam deploy --config-env ${deploy_env} --resolve-s3 --no-fail-on-empty-changeset
+sam deploy --config-env ${deploy_env} --no-fail-on-empty-changeset

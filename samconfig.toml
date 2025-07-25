@@ -4,6 +4,7 @@ version = 0.1
 [default.deploy]
 [default.deploy.parameters]
 stack_name = "dynamodb-add-ttl-<table-name>"
+resolve_s3 = true
 region = "us-east-1"
 confirm_changeset = false
 capabilities = "CAPABILITY_NAMED_IAM"
