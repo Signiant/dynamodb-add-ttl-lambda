@@ -98,14 +98,14 @@ def lambda_handler(event, context):
     status = True
     do_update = False
     table_name = None
-    master_attribute_value = None
+    ttl_reference_attribute_value = None
 
     # print("Received event: " + json.dumps(event, indent=2))
 
-    if 'master_attribute' in os.environ:
-        master_attribute = os.environ['master_attribute']
+    if 'ttl_reference_attribute' in os.environ:
+        ttl_reference_attribute = os.environ['ttl_reference_attribute']
     else:
-        print("FATAL: No master attribute set in the master_attribute environment variable")
+        print("FATAL: No master attribute set in the ttl_reference_attribute environment variable")
         status = False
 
     if 'time_to_live_days' in os.environ:
@@ -135,23 +135,23 @@ def lambda_handler(event, context):
                 print("no TTL attribute name " + ttl_attribute_name + " found - computing and adding")
 
                 # Does our master TTL attribute exist?
-                if master_attribute not in record["dynamodb"]["NewImage"]:
-                    print("ERROR: The master attribute " + master_attribute + " to base the TTL on does not exist")
+                if ttl_reference_attribute not in record["dynamodb"]["NewImage"]:
+                    print("ERROR: The master attribute " + ttl_reference_attribute + " to base the TTL on does not exist")
                 else:
-                    print("Computing a new TTL based on the value in " + master_attribute + " that is " + str(time_to_live_days) + " days in the future")
+                    print("Computing a new TTL based on the value in " + ttl_reference_attribute + " that is " + str(time_to_live_days) + " days in the future")
 
                     # is attribute a string or a number?
-                    if 'S' in record["dynamodb"]["NewImage"][master_attribute]:
-                        master_attribute_value = record["dynamodb"]["NewImage"][master_attribute]['S']
-                    elif 'N' in record["dynamodb"]["NewImage"][master_attribute]:
-                        master_attribute_value = record["dynamodb"]["NewImage"][master_attribute]['N']
+                    if 'S' in record["dynamodb"]["NewImage"][ttl_reference_attribute]:
+                        ttl_reference_attribute_value = record["dynamodb"]["NewImage"][ttl_reference_attribute]['S']
+                    elif 'N' in record["dynamodb"]["NewImage"][ttl_reference_attribute]:
+                        ttl_reference_attribute_value = record["dynamodb"]["NewImage"][ttl_reference_attribute]['N']
                     else:
                         print("ERROR: Unknown attribute type for the master attribute. Unable to continue")
                         status = False
 
-                    if master_attribute_value:
-                        print("Found a " + master_attribute + " value of " + master_attribute_value)
-                        master_epoch_seconds = get_base_value_epoch_seconds(master_attribute_value)
+                    if ttl_reference_attribute_value:
+                        print("Found a " + ttl_reference_attribute + " value of " + ttl_reference_attribute_value)
+                        master_epoch_seconds = get_base_value_epoch_seconds(ttl_reference_attribute_value)
 
                         if master_epoch_seconds:
                             ttl_value = get_expiry(master_epoch_seconds, time_to_live_days)

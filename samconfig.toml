@@ -1,0 +1,18 @@
+version = 0.1
+
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "dynamodb-add-ttl-<table-name>"
+s3_bucket = "<lambda-deploy-bucket>"
+s3_prefix = "dynamodb-add-ttl-<table-name>"
+region = "us-east-1"
+confirm_changeset = false
+capabilities = "CAPABILITY_NAMED_IAM"
+parameter_overrides = [
+  "ttlReferenceAttribute=<TTL_REFERENCE_ATTRIB>",
+  "timeToLive=<HOOK_URL>",
+  "ttlAttributeName=<TTL_ATTRIB_NAME>",
+  "tableName=<TABLE_NAME>",
+  "streamARN=<STREAM_ARN>"
+]
