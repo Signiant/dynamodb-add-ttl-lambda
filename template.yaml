@@ -1,0 +1,64 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Add a TTL to records being inserted into a DynamoDB table
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  ttlReferenceAttribute:
+    Type: String
+    Default: ''
+    Description: Base the TTL on this attribute
+  timeToLive:
+    Type: String
+    Default: ''
+    Description: Add this many days to the ttlReferenceAttribute and use it as the ttl value
+  ttlAttributeName:
+    Type: String
+    Default: ttl
+    Description: Name of the attribute to create as the ttl
+  tableName:
+    Type: String
+    Default: ''
+    Description: DynamoDB Table to apply the ttl to
+  streamARN:
+    Type: String
+    Description: The ARN of the DynamoDB stream
+
+Resources:
+  TTLFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "DynamoDBAddTTL-${tableName}"
+      Description: !Sub "Add a TTL to records being inserted into ${tableName}"
+      Runtime: python3.13
+      CodeUri: src/
+      Handler: dynamodb-add-ttl.lambda_handler
+      MemorySize: 128
+      Timeout: 20
+      Environment:
+        Variables:
+          ttl_reference_attribute: !Ref 'ttlReferenceAttribute'
+          time_to_live_days: !Ref 'timeToLive'
+          ttl_attribute_name: !Ref 'ttlAttributeName'
+      Events:
+        DynamoDB:
+          Type: DynamoDB
+          Properties:
+            BatchSize: 1
+            StartingPosition: LATEST
+            Stream: !Ref streamARN
+      Policies:
+        - Version: 2012-10-17
+          Statement:
+            - Sid: SourceStream
+              Action:
+                - dynamodb:GetRecords
+                - dynamodb:GetShardIterator
+                - dynamodb:DescribeStream
+                - dynamodb:ListStreams
+              Effect: Allow
+              Resource: arn:aws:dynamodb:*:*:table/*/stream/*
+            - Sid: DynamoDB
+              Effect: Allow
+              Action:
+                - dynamodb:UpdateItem
+              Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:*:table/${tableName}"
