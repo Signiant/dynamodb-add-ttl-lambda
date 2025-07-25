@@ -4,8 +4,6 @@ version = 0.1
 [default.deploy]
 [default.deploy.parameters]
 stack_name = "dynamodb-add-ttl-<table-name>"
-s3_bucket = "<lambda-deploy-bucket>"
-s3_prefix = "dynamodb-add-ttl-<table-name>"
 region = "us-east-1"
 confirm_changeset = false
 capabilities = "CAPABILITY_NAMED_IAM"

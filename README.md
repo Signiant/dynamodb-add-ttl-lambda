@@ -11,8 +11,6 @@ The easiest deployment of this solution is using AWS SAM
 * export your AWS credentials (or use --profile option with sam commands)
 * update the samconfig.toml file
   * stack_name - name for the CFN stack
-  * s3_bucket - deploy bucket
-  * s3_prefix - path in deploy bucket used to store package during deploy
   * region - if other than us-east-1
   * parameter overrides
     * ttlReferenceAttribute - existing attribute used to calculate TTL
