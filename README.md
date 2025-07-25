@@ -22,6 +22,9 @@ The easiest deployment of this solution is using AWS SAM
     * streamARN - the ARN of the DynamoDB stream for the table above
 * deploy the lambda using SAM: `./utils/deploy.sh default`
 
-This should deploy the lambda and set up the assoicated dynamodb trigger for the appropriate table.
+This should deploy the lambda and set up the associated dynamodb trigger for the appropriate table.
+
+NOTE: As per the StartingPosition property on the DynamoDB event trigger - this lambda will only process NEW records.
+You may need a separate process to backfill existing records.
 
 You can then monitor the stats for the function and the cloudwatch log to ensure TTLs are being added correctly for new rows.
